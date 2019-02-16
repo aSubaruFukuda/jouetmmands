@@ -1,5 +1,5 @@
 PROGRAM = `git rev-parse --show-toplevel`/bin/ls
-OBJS	= ls.o
+OBJS	= ls.o finfo.o
 SRCS	= $(OBJS:%.o=%.c)
 CC		= gcc
 CFLAGS	= -g -Wall

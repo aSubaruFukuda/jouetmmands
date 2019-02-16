@@ -4,6 +4,8 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <stdlib.h>
+#include <string.h>
+#include "finfo.h"
 
 void do_ls(char [], int);
 
@@ -34,8 +36,12 @@ void do_ls(char dirname[], int lflag_opt) {
 	DIR *dir_ptr;
 	struct dirent *direntp;
 	char *fname;
-	char fileType;
 	struct stat fstatus;
+	char user[256];
+	char group[256];
+	char type;
+	char *perm;
+	char *mod_time;
 
 	if ((dir_ptr = opendir(dirname)) == NULL) {
 		fprintf(stderr, "ls1: cannot open %s\n", dirname);
@@ -43,31 +49,15 @@ void do_ls(char dirname[], int lflag_opt) {
 		while ((direntp = readdir(dir_ptr)) != NULL) {
 			fname = direntp -> d_name;
 			if (lflag_opt) {
+				memset(user, '\0', sizeof(char) * 256);
 				stat(fname, &fstatus);
-				switch (fstatus.st_mode & S_IFMT) {
-					case S_IFSOCK:
-						fileType = 's';
-						break;
-					case S_IFLNK:
-						fileType = 'l';
-						break;
-					case S_IFBLK:
-						fileType = 'b';
-						break;
-					case S_IFCHR :
-						fileType = 'c';
-						break;
-					case S_IFDIR :
-						fileType = 'd';
-						break;
-					case S_IFIFO :
-						fileType = 'p';
-						break;
-					case S_IFREG:
-						fileType = '-';
-						break;
-				}
-				printf("%c %s \n", fileType, fname);
+				type = getFileType(fstatus.st_mode);
+				perm = getPermission(fstatus.st_mode);
+				getUname(fstatus.st_uid, user);
+				getGname(fstatus.st_gid, group);
+				mod_time = getModificationTime(fstatus.st_mtime);
+				printf("%c%s %ld %s %s %12.12s %s\n", type, perm, fstatus.st_nlink, user, group, mod_time+4, fname);
+				free(perm);
 			} else {
 				printf("%s\n", fname);
 			}
@@ -75,4 +65,3 @@ void do_ls(char dirname[], int lflag_opt) {
 		closedir(dir_ptr);
 	}
 }
-
